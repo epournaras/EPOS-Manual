@@ -1,0 +1,158 @@
+% !TEX TS-program = pdflatex
+% !TEX encoding = UTF-8 Unicode
+
+% This is a simple template for a LaTeX document using the "article" class.
+% See "book", "report", "letter" for other types of document.
+
+\documentclass[11pt]{article} % use larger type; default would be 10pt
+
+\usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)
+
+%%% Examples of Article customizations
+% These packages are optional, depending whether you want the features they provide.
+% See the LaTeX Companion or other references for full information.
+
+%%% PAGE DIMENSIONS
+\usepackage{geometry} % to change the page dimensions
+\geometry{a4paper} % or letterpaper (US) or a5paper or....
+% \geometry{margin=2in} % for example, change the margins to 2 inches all round
+% \geometry{landscape} % set up the page for landscape
+%   read geometry.pdf for detailed page layout information
+
+\usepackage{graphicx} % support the \includegraphics command and options
+
+% \usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
+
+%%% PACKAGES
+\usepackage{booktabs} % for much better looking tables
+\usepackage{array} % for better arrays (eg matrices) in maths
+\usepackage{paralist} % very flexible & customisable lists (eg. enumerate/itemize, etc.)
+\usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
+\usepackage{subfig} % make it possible to include more than one captioned figure/table in a single float
+% These packages are all incorporated in the memoir class to one degree or another...
+
+%%% HEADERS & FOOTERS
+\usepackage{fancyhdr} % This should be set AFTER setting up the page geometry
+\pagestyle{fancy} % options: empty , plain , fancy
+\renewcommand{\headrulewidth}{0pt} % customise the layout...
+\lhead{}\chead{}\rhead{}
+\lfoot{}\cfoot{\thepage}\rfoot{}
+
+%%% SECTION TITLE APPEARANCE
+\usepackage{sectsty}
+\allsectionsfont{\sffamily\mdseries\upshape} % (See the fntguide.pdf for font help)
+% (This matches ConTeXt defaults)
+
+%%% ToC (table of contents) APPEARANCE
+\usepackage[nottoc,notlof,notlot]{tocbibind} % Put the bibliography in the ToC
+\usepackage[titles,subfigure]{tocloft} % Alter the style of the Table of Contents
+\renewcommand{\cftsecfont}{\rmfamily\mdseries\upshape}
+\renewcommand{\cftsecpagefont}{\rmfamily\mdseries\upshape} % No bold!
+
+
+\newcommand{\code}{}
+
+%%% END Article customizations
+
+%%% The "real" document content comes below...
+
+\title{I-EPOS Manual}
+\author{Peter Pilgerstorfer}
+%\date{} % Activate to display a given date or no date (if empty),
+         % otherwise the current date is printed 
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+\subsection{Install and setup}
+TODO: netbeans/eclipse instructions
+TODO: add libraries
+
+\subsection{Execute the sample simulation}
+TODO: run GUI
+TODO: run from code: SimpleExperiment.main
+
+\section{Architecture}
+TODO: software architecture
+
+\section{Use cases}
+\subsection{Configure the simulation}
+Let's take a look at the provided sample experiment \code{SimpleExperiment}. It contains a main function that specifies all parameters, starts the simulation and presents the results.
+
+\subsubsection*{Dataset}
+Initially the dataset is specified. Note that the \code{Dataset} object is not required for the algorithm, but it simplifies the configuration. Technically all we need is a way to get a list of possible plans for each agent. The \code{Dataset} interface provides this functionality via \code{Dataset.getPlans(int agentIdx)}.
+There are two classes of datasets implemented:
+\begin{itemize}
+	\item \code{FileVectorDataset} is a dataset that is read from disk. Only the dataset folder has to be specified. The example datasets are located in the directory '<project dir>/input-data'. Section \ref{sec:new_dataset} describes the input format for this kind of dataset.
+	\item \code{GaussianDataset} is a generated dataset where every plan is a vector drawn from a gaussian distribution. The parameters specify the number and dimensionality of the plans as well as mean and standard deviation of the distribution.
+\end{itemize}
+The number of agents can be set arbitrarily. However, when using a \code{FileVectorDataset}, the number of agents has to be below \code{FileVectorDataset.getNumAgents()}.
+
+\subsubsection*{Cost functions}
+The global cost function describes what we want to minimize globally. The local cost function describes what each agent wants to minimize locally. \code{lambda} is the tradeoff between global and local minimization. \code{lambda = 0} means only global cost is minimized, \code{lambda = 1} means only local cost is minimized.
+For global cost functions we can choose any implementation of the interface \code{CostFunction} in general. However, for gradient descent based algorithms an instance of \code{DifferentiableCostFunction} is required. A list of possible cost functions is as follows:
+\begin{itemize}
+	\item \code{DotCostFunction} minimizes the dot product of a given vector with the global response. See Section \ref{sec:read_vec} how to read a vector from a file. Be aware that the dimensionality of the vector has to match the dimensionality of the dataset.
+An example use case for this cost function is minimizing monetary cost. The agent plans contain the amount of resources they consume, and the vector passed to \code{DotCostFunction} describes the price for each resource.
+As this is a linear cost function, I-EPOS always finds the optimal value in the first iteration.
+	\item \code{SqrDistCostFunction} minimizes the (squared) distance of the global response to a given vector. See Section \ref{sec:read_vec} how to read a vector from a file. Be aware that the dimensionality of the vector has to match the dimensionality of the dataset.
+This cost function tries to make the global response as similar to the provided target vector as possible.
+	\item \code{VarCostFunction} minimizes the variance of the global response. Therefore it can be used to stabilize resource consumption over time, or for load balancing applications.
+	\item \code{StdDevCostFunction} minimizes the standard deviation of the global response. For I-EPOS there is no difference between minimizing standard deviation and minimizing variance, as the functions share the same minima.
+	\item \code{MaxCostFunction} (non-differentiable) minimizes the maximum value of the global response. This function is useful for peak reduction.
+\end{itemize}
+Local cost functions have to implement the \code{PlanCostFunction} interface. Two functions are implemented:
+\begin{itemize}
+	\item \code{IndexCostFunction} lets agents select plans with a small index. Therefore the plans in a dataset should be ordered in a way that lists preferable plans first.
+	\item \code{PlanScoreCostFunction} lets agents select plans with a small score. The dataset specifies the score for each plan. See Section \ref{sec:new_dataset} for details how to specify this information in a dataset.
+\end{itemize}
+
+\subsubsection*{Network topology}
+
+
+        // network
+        int numChildren = 2; // +- of using this topology
+
+        // algorithm
+        int numIterations = 20;
+        PlanSelector<IeposAgent<Vector>, Vector> planSelector = new IeposPlanSelector();
+
+        // loggers
+        LoggingProvider<IeposAgent<Vector>> loggingProvider = new LoggingProvider<>();
+        loggingProvider.add(new GlobalCostLogger());
+        loggingProvider.add(new LocalCostLogger());
+        loggingProvider.add(new TerminationLogger());
+        loggingProvider.add(new JFreeChartLogger());
+        loggingProvider.add(new GraphLogger<>(GraphLogger.Type.Change, null));
+
+        // start experiment
+        new SimpleExperiment().run(
+                numChildren,
+                numIterations,
+                numAgents,
+                agentIdx -> {
+            List<Plan<Vector>> possiblePlans = dataset.getPlans(agentIdx);
+            AgentLoggingProvider agentLP = loggingProvider.getAgentLoggingProvider(agentIdx, 0);
+
+            IeposAgent newAgent = new IeposAgent(numIterations, possiblePlans, globalCostFunc, localCostFunc, agentLP, random.nextLong());
+            newAgent.setLambda(lambda);
+            newAgent.setPlanSelector(planSelector);
+            return newAgent;
+        });
+
+        loggingProvider.print();
+
+
+FileVectorDataset -> getNumAgents()
+
+\subsection{Write a new optimization function} \label{sec:new_func}
+\subsection{Add a new dataset} \label{sec:new_dataset}
+
+\appendix{}
+\subsection{Glossary}
+\subsection{Utility functions}
+\subsubsection{Reading a vector} \label{sec:read_vec}
+A vector can be read from a file via \code{VectorIO.readVector(File vectorFile)}. The file is assumed to be text file, containing a comma-separated list of double values that make up the vector.
+\end{document}
