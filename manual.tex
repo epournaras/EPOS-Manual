@@ -109,46 +109,59 @@ Local cost functions have to implement the \code{PlanCostFunction} interface. Tw
 	\item \code{PlanScoreCostFunction} lets agents select plans with a small score. The dataset specifies the score for each plan. See Section \ref{sec:new_dataset} for details how to specify this information in a dataset.
 \end{itemize}
 
-\subsubsection*{Network topology}
+\subsubsection*{Network}
+The network is considered to be a balanced tree with the same number of children for each inner node. The number of children for inner nodes can be specified. Be aware that the runtime of I-EPOS is exponential in the number of children. Luckily the optimization performance of a binary tree is already close to optimal in practice.
 
+\subsubsection*{Logging}
+Next we specify what information we want to gather from the simulation. For this task we specify a \code{LoggingProvider<A>}, where \code{A} is the class of the agent that is used in the simulation.
+We then specify all information we want to log by adding \code{AgentLoggingProvider}s. Each \code{AgentLoggingProvider} is responsible for reading and presenting one specific type of data. The output is presented after the simulation by calling the method \code{LoggingProvider.print}. The following loggers are ready to use:
+\begin{itemize}
+	\item \code{GlobalCostLogger} logs the global cost in each iteration and prints the global cost for each individual iteration averaged over multiple simulations. Note that the sample shown in \code{SimpleExperiment} only performs one simulation. Multiple simulations can be performed with e.g. different seeds for the agents or different datasets. The only requirement is that the same \code{LoggingProvider} is used.
+	\item \code{LocalCostLogger} logs the average local cost in each iteration and prints the average local cost for each individual iteration averaged over multiple simulations.
+	\item \code{TerminationLogger} logs how many iterations it took for the algorithm to terminate. The algorithm is considered terminated if nothing changes between two consecutive iterations.
+	\item \code{ProgressLogger} prints symbols every few iterations in order to show how far the algorithm has proceeded. It is only useful for large simulations.
+	\item \code{JFreeChartLogger} shows a plot with global and (optionally) local cost values for each iteration in a new window. The logger requires \code{GlobalCostLogger} to be added to the \code{LoggingProvider} as well. If the \code{LocalCostLogger} is present, the local cost is also shown in the plot.
+	\item \code{GraphLogger} shows a graph of the network at a given iteration in a new window. With the arrow keys you can switch between different iterations. Each agent is represented in a certain color. The color code depends on the specified type \code{GraphLogger.Type}. The following types are available:
+	\begin{itemize}
+		\item \code{Change} marks each agent that changed its selection in the previous iteration as black and all agents without change as white.
+		\item \code{Index} colors each agent based on the index of the selected plan. Agents that selected the plan with minimal index are colored white and agents that selected the plan with maximal index are colored black.
+	\end{itemize}
+	\item \code{FileWriter} writes the log to the specified directory once \code{LoggingProvider.print()} is executed.
+	\item \code{FileReader} reads the log from the specified directory once \code{LoggingProvider.print()} is executed. This logger can be used to show results from a previous simulation that were stored with \code{FileWriter}. A sample application of \code{FileReader} can be seen in \code{ReplayExperiment}.
+\end{itemize}
 
-        // network
-        int numChildren = 2; // +- of using this topology
+\subsubsection*{Algorithm}
+Finally, we have to specify the optimization algorithm. The algorithm is determined by the type of \code{Agent} that is used.
+\begin{itemize}
+	\item \code{IeposAgent} has quite a few options that were part of the research. We need to specify the number of iterations the algorithm should perform. For problems with less than 1000 agents the (local) optimum is usually found with less than 20 iterations. In addition we can specify a \code{PlanSelector}. The default is \code{IeposPlanSelector}. As part of the research that was done for I-EPOS, gradient descent motivated plan selectors were also developed. However, they are in inferior to the default in terms of optimization performance.
+	\item \code{CohdaAgent} is an algorithm that was used as a baseline for I-EPOS. We only need to specify the number of iterations for this algorithm. Limitations: First, \code{CohdaAgent} does not support local cost. Therefore \code{LocalCostLogger} cannot be used. Second, the algorithm starts with an incomplete global response that is missing data from some agents. It takes \code{log(numAgents)/log(numChildren)} iterations for the global response to be complete. Third, even though COHDA does not require the network to be a tree, only tree networks can be simulated with this software.
+\end{itemize}
 
-        // algorithm
-        int numIterations = 20;
-        PlanSelector<IeposAgent<Vector>, Vector> planSelector = new IeposPlanSelector();
+\subsection{How to store evaluation results} \label{sec:store_results}
+Evaluation results can be stored using the \code{LoggingProvider} \code{FileWriter}. Once the print command is executed on the \code{LoggingProvider} instance, the log is written to the specified file. With \code{FileReader}, the written file can be read again. See \code{ReplayExperiment} as an example how to read a log file.
 
-        // loggers
-        LoggingProvider<IeposAgent<Vector>> loggingProvider = new LoggingProvider<>();
-        loggingProvider.add(new GlobalCostLogger());
-        loggingProvider.add(new LocalCostLogger());
-        loggingProvider.add(new TerminationLogger());
-        loggingProvider.add(new JFreeChartLogger());
-        loggingProvider.add(new GraphLogger<>(GraphLogger.Type.Change, null));
+\subsection{Write a new cost function} \label{sec:new_func}
+Write a new class that extends the abstract class \code{CostFunction<DT>} or \code{DifferentiableCostFunction<DT>} where \code{DT} is the datatype that this cost function should operate on. The function \code{CostFunction.calcCost(DT value)} should compute the cost of the given value. For differentiable functions we also need to implement \code{DifferentiableCostFunction.calcGradient(DT value)} that should return the gradient of the function at point \code{value}.
 
-        // start experiment
-        new SimpleExperiment().run(
-                numChildren,
-                numIterations,
-                numAgents,
-                agentIdx -> {
-            List<Plan<Vector>> possiblePlans = dataset.getPlans(agentIdx);
-            AgentLoggingProvider agentLP = loggingProvider.getAgentLoggingProvider(agentIdx, 0);
-
-            IeposAgent newAgent = new IeposAgent(numIterations, possiblePlans, globalCostFunc, localCostFunc, agentLP, random.nextLong());
-            newAgent.setLambda(lambda);
-            newAgent.setPlanSelector(planSelector);
-            return newAgent;
-        });
-
-        loggingProvider.print();
-
-
-FileVectorDataset -> getNumAgents()
-
-\subsection{Write a new optimization function} \label{sec:new_func}
 \subsection{Add a new dataset} \label{sec:new_dataset}
+One way of adding a new dataset is to use the existing class \code{FileVectorDataset} to read a custom dataset from the dataset directory. The dataset is a directory containing one file for each agent. The files should be named \code{agent\_<id>.plans}, where \code{<id>} is the id of the agent, starting from 0 upwards.
+Each file should be a text file containing one row for each possible plan the agent can choose. A plan has the following layout: \code{<score>:<vector>}. The score is a double value that describes the cost this plan imposes for an agent. It can be used for local cost minimization\footnote{Set \code{lambda=0} if the score should be ignored.}. The vector is a comma separated list of double values.
+
+It is also possible to code a new dataset. The only requirement for the dataset is to generate a list of plans given the index of an agent. \code{Dataset} is a handy interface that can be used to implement a new dataset. While the sample datasets all use vectors as datatype, the new dataset can use a custom datatype.
+
+\subsection{Add a new datatype}
+Write a new class that implements the interface \code{Datatype}. The functions of the interface \code{DataType} were designed work for vectors. So when implementing those functions, be aware that the semantic should be as it would be for vectors.
+
+To use the new datatype, we also need to implement a new dataset and a new cost function that can handle the new datatype.
+
+%\subsection{Add a new logger}
+%Write a new class that extends the abstract class \code{AgentLogger}. Let us have a look what happens with the loggers that are added to \code{LoggingProvider} in order to understand what should be implemented:
+%\begin{enumerate}
+%	\item The object that is passed to the \code{LoggingProvider} in the experiment configuration is cloned once for each agent. During the simulation, an \code{AgentLogger} object is therefore only responsible for logging values of a single agent.
+%	\item Before the algorithm starts, the method \code{init(agent)} is called. This is the place where the logger can be initialized with data dependent on the concrete agent that should be logged by this logger.
+%	\item After each iteration of the simulation, the method \code{log(measurementLog, epoch, agent)} is called. We can write information into the \code{measurementLog}:
+%	\code{measurementLog.log(epoch, agent.get, measuredValue)}
+%\end{enumerate}
 
 \appendix{}
 \subsection{Glossary}
