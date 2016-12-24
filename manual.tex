@@ -225,19 +225,27 @@ Each file should be a text file containing one row for each possible plan the ag
 
 It is also possible to code a new dataset. The only requirement for the dataset is to generate a list of plans given the index of an agent. \code{Dataset} is a handy interface that can be used to implement a new dataset. While the sample datasets all use vectors as datatype, the new dataset can use a custom datatype.
 
+The following example dataset generates the plans \code{\{1,0,0\},\{0,1,0\} and \{0,0,1\}} for each agent:
+\begin{verbatim}
+public class MyDataset implements Dataset<Vector> {
+   private List plans = new ArrayList();
+   public MyDataset() {
+      for(int i = 0; i < 3; i++) {
+         Vector v = new Vector(3);
+         v.setValue(i, 1);
+         plans.add(new Plan(v));
+      }
+   }
+   public List<Plan<Vector>> getPlans(int agentId) {
+      return plans;
+   }
+}
+\end{verbatim}
+
 \subsection{Add a new datatype}
 Write a new class that implements the interface \code{Datatype}. The functions of the interface \code{DataType} were designed work for vectors. So when implementing those functions, be aware that the semantic should be as it would be for vectors.
 
 To use the new datatype, we also need to implement a new dataset and a new cost function that can handle the new datatype.
-
-%\subsection{Add a new logger}
-%Write a new class that extends the abstract class \code{AgentLogger}. Let us have a look what happens with the loggers that are added to \code{LoggingProvider} in order to understand what should be implemented:
-%\begin{enumerate}
-%	\item The object that is passed to the \code{LoggingProvider} in the experiment configuration is cloned once for each agent. During the simulation, an \code{AgentLogger} object is therefore only responsible for logging values of a single agent.
-%	\item Before the algorithm starts, the method \code{init(agent)} is called. This is the place where the logger can be initialized with data dependent on the concrete agent that should be logged by this logger.
-%	\item After each iteration of the simulation, the method \code{log(measurementLog, epoch, agent)} is called. We can write information into the \code{measurementLog}:
-%	\code{measurementLog.log(epoch, agent.get, measuredValue)}
-%\end{enumerate}
 
 \appendix
 \section{Glossary}
