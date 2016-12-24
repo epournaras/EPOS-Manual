@@ -50,7 +50,7 @@
 \renewcommand{\cftsecpagefont}{\rmfamily\mdseries\upshape} % No bold!
 
 
-\newcommand{\code}{}
+\newcommand{\code}{\texttt}
 
 %%% END Article customizations
 
@@ -79,29 +79,35 @@ TODO: software architecture
 
 \section{Use cases}
 \subsection{Configure the simulation}
-Let's take a look at the provided sample experiment \code{SimpleExperiment}. It contains a main function that specifies all parameters, starts the simulation and presents the results.
+A simulation example is provided in class \code{SimpleExperiment}. It contains a main function that specifies all parameters, starts the simulation and presents the results.
 
 \subsubsection*{Dataset}
-Initially the dataset is specified. Note that the \code{Dataset} object is not required for the algorithm, but it simplifies the configuration. Technically all we need is a way to get a list of possible plans for each agent. The \code{Dataset} interface provides this functionality via \code{Dataset.getPlans(int agentIdx)}.
+The \code{Dataset} interface provides a way to get plans for a given agent via \code{Dataset.getPlans(int agentIdx)}.
 There are two classes of datasets implemented:
 \begin{itemize}
-	\item \code{FileVectorDataset} is a dataset that is read from disk. Only the dataset folder has to be specified. The example datasets are located in the directory '<project dir>/input-data'. Section \ref{sec:new_dataset} describes the input format for this kind of dataset.
+	\item \code{FileVectorDataset} is a dataset that is read from disk. Only the dataset folder has to be specified. The example datasets are located in the directory 'input-data'. Section \ref{sec:new_dataset} describes the input format for this kind of dataset.
 	\item \code{GaussianDataset} is a generated dataset where every plan is a vector drawn from a gaussian distribution. The parameters specify the number and dimensionality of the plans as well as mean and standard deviation of the distribution.
 \end{itemize}
 The number of agents can be set arbitrarily. However, when using a \code{FileVectorDataset}, the number of agents has to be below \code{FileVectorDataset.getNumAgents()}.
 
+For example a dataset of 100 agents taken from the 'bicycle' dataset can be specified as follows:
+\begin{verbatim}
+Dataset dataset = new FileVectorDataset("input-data/bicycle");
+int numAgents = 100;
+\end{verbatim}
+
 \subsubsection*{Cost functions}
 The global cost function describes what we want to minimize globally. The local cost function describes what each agent wants to minimize locally. \code{lambda} is the tradeoff between global and local minimization. \code{lambda = 0} means only global cost is minimized, \code{lambda = 1} means only local cost is minimized.
-For global cost functions we can choose any implementation of the interface \code{CostFunction} in general. However, for gradient descent based algorithms an instance of \code{DifferentiableCostFunction} is required. A list of possible cost functions is as follows:
+For global cost functions we can choose any implementation of the interface \code{CostFunction} in general. However, for gradient descent based algorithms an instance of \code{DifferentiableCostFunction} is required. A list of possible global cost functions is as follows:
 \begin{itemize}
-	\item \code{DotCostFunction} minimizes the dot product of a given vector with the global response. See Section \ref{sec:read_vec} how to read a vector from a file. Be aware that the dimensionality of the vector has to match the dimensionality of the dataset.
+	\item \code{DotCostFunction} minimizes the dot product of a given vector with the global response. See Section \ref{sec:read_vec} how to read the vector from a file. Be aware that the dimensionality of the vector has to match the dimensionality of the dataset.
 An example use case for this cost function is minimizing monetary cost. The agent plans contain the amount of resources they consume, and the vector passed to \code{DotCostFunction} describes the price for each resource.
 As this is a linear cost function, I-EPOS always finds the optimal value in the first iteration.
 	\item \code{SqrDistCostFunction} minimizes the (squared) distance of the global response to a given vector. See Section \ref{sec:read_vec} how to read a vector from a file. Be aware that the dimensionality of the vector has to match the dimensionality of the dataset.
 This cost function tries to make the global response as similar to the provided target vector as possible.
-	\item \code{VarCostFunction} minimizes the variance of the global response. Therefore it can be used to stabilize resource consumption over time, or for load balancing applications.
+	\item \code{VarCostFunction} minimizes the variance of the global response. The effect is that the global response gets stabilized.
 	\item \code{StdDevCostFunction} minimizes the standard deviation of the global response. For I-EPOS there is no difference between minimizing standard deviation and minimizing variance, as the functions share the same minima.
-	\item \code{MaxCostFunction} (non-differentiable) minimizes the maximum value of the global response. This function is useful for peak reduction.
+	\item \code{MaxCostFunction} (non-differentiable) minimizes the maximum value of the global response. This function is useful to remove peaks in the global response.
 \end{itemize}
 Local cost functions have to implement the \code{PlanCostFunction} interface. Two functions are implemented:
 \begin{itemize}
@@ -109,18 +115,30 @@ Local cost functions have to implement the \code{PlanCostFunction} interface. Tw
 	\item \code{PlanScoreCostFunction} lets agents select plans with a small score. The dataset specifies the score for each plan. See Section \ref{sec:new_dataset} for details how to specify this information in a dataset.
 \end{itemize}
 
+\noindent For example the variance of the global response can be minimized with the following settings:
+\begin{verbatim}
+CostFunction globalCostFunc = new VarCostFunction();
+LocalCostFunction localCostFunc = null;
+double lambda = 0;
+\end{verbatim}
+
 \subsubsection*{Network}
 The network is considered to be a balanced tree with the same number of children for each inner node. The number of children for inner nodes can be specified. Be aware that the runtime of I-EPOS is exponential in the number of children. Luckily the optimization performance of a binary tree is already close to optimal in practice.
 
+For example a binary tree can be specified as follows:
+\begin{verbatim}
+int numChildren = 2;
+\end{verbatim}
+
 \subsubsection*{Logging}
 Next we specify what information we want to gather from the simulation. For this task we specify a \code{LoggingProvider<A>}, where \code{A} is the class of the agent that is used in the simulation.
-We then specify all information we want to log by adding \code{AgentLoggingProvider}s. Each \code{AgentLoggingProvider} is responsible for reading and presenting one specific type of data. The output is presented after the simulation by calling the method \code{LoggingProvider.print}. The following loggers are ready to use:
+We then specify all information we want to log by adding \code{AgentLoggingProvider}s. Each \code{AgentLoggingProvider} is responsible for reading and presenting one specific type of data. The output is presented after the simulation by calling the method \\\code{LoggingProvider.print()}. The following loggers are ready to use:
 \begin{itemize}
-	\item \code{GlobalCostLogger} logs the global cost in each iteration and prints the global cost for each individual iteration averaged over multiple simulations. Note that the sample shown in \code{SimpleExperiment} only performs one simulation. Multiple simulations can be performed with e.g. different seeds for the agents or different datasets. The only requirement is that the same \code{LoggingProvider} is used.
+	\item \code{GlobalCostLogger} logs the global cost in each iteration and prints the global cost for each individual iteration averaged over multiple simulations. Note that the sample shown in \code{SimpleExperiment} only performs one simulation. Multiple simulations can be performed with e.g. different seeds for the agents or different datasets. The only requirement is that the same \code{LoggingProvider} is used, so all data is gathered in one place.
 	\item \code{LocalCostLogger} logs the average local cost in each iteration and prints the average local cost for each individual iteration averaged over multiple simulations.
 	\item \code{TerminationLogger} logs how many iterations it took for the algorithm to terminate. The algorithm is considered terminated if nothing changes between two consecutive iterations.
 	\item \code{ProgressLogger} prints symbols every few iterations in order to show how far the algorithm has proceeded. It is only useful for large simulations.
-	\item \code{JFreeChartLogger} shows a plot with global and (optionally) local cost values for each iteration in a new window. The logger requires \code{GlobalCostLogger} to be added to the \code{LoggingProvider} as well. If the \code{LocalCostLogger} is present, the local cost is also shown in the plot.
+	\item \code{CostViewer} shows a plot with global and (optionally) local cost values for each iteration in a new window. The logger requires \code{GlobalCostLogger} to be added to the \code{LoggingProvider} as well. If the \code{LocalCostLogger} is present, the local cost is also shown in the plot.
 	\item \code{GraphLogger} shows a graph of the network at a given iteration in a new window. With the arrow keys you can switch between different iterations. Each agent is represented in a certain color. The color code depends on the specified type \code{GraphLogger.Type}. The following types are available:
 	\begin{itemize}
 		\item \code{Change} marks each agent that changed its selection in the previous iteration as black and all agents without change as white.
@@ -130,18 +148,76 @@ We then specify all information we want to log by adding \code{AgentLoggingProvi
 	\item \code{FileReader} reads the log from the specified directory once \code{LoggingProvider.print()} is executed. This logger can be used to show results from a previous simulation that were stored with \code{FileWriter}. A sample application of \code{FileReader} can be seen in \code{ReplayExperiment}.
 \end{itemize}
 
+\noindent For example the global response can be logged and presented in a new windwow as follows:
+\begin{verbatim}
+LoggingProvider loggingProvider = new LoggingProvider();
+loggingProvider.add(new GlobalCostLogger());
+loggingProvider.add(new CostViewer());
+\end{verbatim}
+
 \subsubsection*{Algorithm}
-Finally, we have to specify the optimization algorithm. The algorithm is determined by the type of \code{Agent} that is used.
+Finally, the optimization algorithm has to be specified. The algorithm is determined by the type of \code{Agent} that is used.
 \begin{itemize}
-	\item \code{IeposAgent} has quite a few options that were part of the research. We need to specify the number of iterations the algorithm should perform. For problems with less than 1000 agents the (local) optimum is usually found with less than 20 iterations. In addition we can specify a \code{PlanSelector}. The default is \code{IeposPlanSelector}. As part of the research that was done for I-EPOS, gradient descent motivated plan selectors were also developed. However, they are in inferior to the default in terms of optimization performance.
+	\item \code{IeposAgent} has quite a few options that were part of the research. We need to specify the number of iterations the algorithm should perform. For problems with less than 1000 agents the (local) optimum is usually found with less than 20 iterations. In addition we can specify a \code{PlanSelector}. The default is \code{IeposPlanSelector}. As part of the research that was done for I-EPOS, gradient descent motivated plan selectors were also developed. However, in general they have lower performance than the default.
 	\item \code{CohdaAgent} is an algorithm that was used as a baseline for I-EPOS. We only need to specify the number of iterations for this algorithm. Limitations: First, \code{CohdaAgent} does not support local cost. Therefore \code{LocalCostLogger} cannot be used. Second, the algorithm starts with an incomplete global response that is missing data from some agents. It takes \code{log(numAgents)/log(numChildren)} iterations for the global response to be complete. Third, even though COHDA does not require the network to be a tree, only tree networks can be simulated with this software.
 \end{itemize}
 
+\noindent In order to use the I-EPOS algorithm, the system should consist of \code{IeposAgent} nodes. This can be specified via the following function:
+\begin{verbatim}
+Function<Integer, Agent> createAgent = (Integer agentIdx) -> {
+   return new IeposAgent(
+      numIterations,
+      dataset.getPlans(agentIdx),
+      globalCostFunc,
+      localCostFunc,
+      loggingProvider.getAgentLoggingProvider(agentIdx, 0));
+};
+\end{verbatim}
+
+\subsubsection*{Run the simulation}
+Now that the configuration is complete, the simulation can be started as follows:
+\begin{verbatim}
+IeposExperiment.runSimulation(
+   numChildren,
+   numIterations,
+   numAgents,
+   createAgent);
+loggingProvider.print();
+\end{verbatim}
+
 \subsection{How to store evaluation results} \label{sec:store_results}
-Evaluation results can be stored using the \code{LoggingProvider} \code{FileWriter}. Once the print command is executed on the \code{LoggingProvider} instance, the log is written to the specified file. With \code{FileReader}, the written file can be read again. See \code{ReplayExperiment} as an example how to read a log file.
+Evaluation results can be stored using the class \code{FileWriter}. Once the print command is executed on the \code{LoggingProvider} instance, the log is written to the specified file. With \code{FileReader}, the written file can be read again. See \code{ReplayExperiment} as an example how to read a log file.
+
+For example, logging the global cost and storing it in the file 'mylog.log' can be specified in the configuration as follows:
+\begin{verbatim}
+...
+LoggingProvider loggingProvider = new LoggingProvider();
+loggingProvider.add(new GlobalCostLogger());
+loggingProvider.add(new FileWriter("myLog.log"));
+...
+\end{verbatim}
+Reading the logged data and displaying it again can be done in a separate program:
+\begin{verbatim}
+public static void main(String[] args) {
+   LoggingProvider loggingProvider = new LoggingProvider();
+   loggingProvider.add(new FileReader("myLog.log"));
+   loggingProvider.add(new CostViewer());
+
+   loggingProvider.print();
+}
+\end{verbatim}
 
 \subsection{Write a new cost function} \label{sec:new_func}
-Write a new class that extends the abstract class \code{CostFunction<DT>} or \code{DifferentiableCostFunction<DT>} where \code{DT} is the datatype that this cost function should operate on. The function \code{CostFunction.calcCost(DT value)} should compute the cost of the given value. For differentiable functions we also need to implement \code{DifferentiableCostFunction.calcGradient(DT value)} that should return the gradient of the function at point \code{value}.
+Write a new class that extends the abstract class \code{CostFunction<DT>} or\\\code{DifferentiableCostFunction<DT>} where \code{DT} is the datatype that this cost function should operate on. The function \code{CostFunction.calcCost(DT value)} should compute the cost of the given value. For differentiable functions we also need to implement \code{DifferentiableCostFunction.calcGradient(DT value)} that should return the gradient of the function at point \code{value}.
+
+For example, a cost function that computes the cost as the smallest value of a vector could be implemented as follows:
+\begin{verbatim}
+public class MinCostFunction extends CostFunction<Vector> {
+   public double calcCost(Vector vector) {
+      return vector.min();
+   }
+}
+\end{verbatim}
 
 \subsection{Add a new dataset} \label{sec:new_dataset}
 One way of adding a new dataset is to use the existing class \code{FileVectorDataset} to read a custom dataset from the dataset directory. The dataset is a directory containing one file for each agent. The files should be named \code{agent\_<id>.plans}, where \code{<id>} is the id of the agent, starting from 0 upwards.
@@ -163,9 +239,9 @@ To use the new datatype, we also need to implement a new dataset and a new cost 
 %	\code{measurementLog.log(epoch, agent.get, measuredValue)}
 %\end{enumerate}
 
-\appendix{}
-\subsection{Glossary}
-\subsection{Utility functions}
-\subsubsection{Reading a vector} \label{sec:read_vec}
+\appendix
+\section{Glossary}
+\section{Utility functions}
+\subsection{Reading a vector} \label{sec:read_vec}
 A vector can be read from a file via \code{VectorIO.readVector(File vectorFile)}. The file is assumed to be text file, containing a comma-separated list of double values that make up the vector.
 \end{document}
