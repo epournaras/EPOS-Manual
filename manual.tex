@@ -31,6 +31,8 @@
 \usepackage{subfig} % make it possible to include more than one captioned figure/table in a single float
 % These packages are all incorporated in the memoir class to one degree or another...
 
+\usepackage{url}
+
 %%% HEADERS & FOOTERS
 \usepackage{fancyhdr} % This should be set AFTER setting up the page geometry
 \pagestyle{fancy} % options: empty , plain , fancy
@@ -65,18 +67,52 @@
 \maketitle
 
 \section{Introduction}
+This documents describes the software that simulates I-EPOS, an algorithm for decentralized combinatorial optimization.
 
-\subsection{Install and setup}
-TODO: netbeans/eclipse instructions
-TODO: add libraries
+\subsection{Installation and setup}
+\begin{itemize}
+	\item Download the project repository from GitHub (TODO).
+	\item Make sure that a version of Java 8 is installed. You can download it from \url{http://www.oracle.com/technetwork/java/javase/downloads/index.html}.
+\end{itemize}
+\subsubsection*{Netbeans setup}
+\begin{itemize}
+	\item Make sure that Netbeans is installed. You can download it from \url{http://netbeans.org/downloads/}.
+	\item Open the EPOS project folder in Netbeans.
+	\item Add all libraries from the lib folder to the project.
+\end{itemize}
 
 \subsection{Execute the sample simulation}
-TODO: run GUI
-TODO: run from code: SimpleExperiment.main
+\begin{itemize}
+	\item Start the program
+	\begin{itemize}
+	\item Run from command line:\\
+Navigate to the project directory and execute \code{java -jar EPOS.jar}.
+	\item Compile and run in Netbeans:\\
+Build and run the project with main class \code{GUIExperiment} (default setting).
+	\end{itemize}
+	\item The configuration window opens as shown in Figure \ref{fig:config}. Run the simulation by clicking the "Run" button.
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.6]{img/configuration.png}
+\caption{Simulation configuration}
+\label{fig:config}
+\end{figure}
+	\item The result window opens and shows details about the simulation as shown in Figure \ref{fig:result}. The plot "Global and average local cost" shows the global and local cost in each iteration. The two plots on the bottom show the system state after each iteration. Switch between iterations with the "Next" and "Previous" buttons. The plot "Global Response" shows what the global response, the output of the system, looks like. The plot "Network" shows which agents in the network changed their selections compared to the previous iteration.
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.6]{img/results.png}
+\caption{Simulation results}
+\label{fig:result}
+\end{figure}
+\end{itemize}
 
+\newpage
 \section{Architecture}
-TODO: software architecture
+The software uses the Protopeer framework to simulate agents in a network. The tree is constructed via the TreeGateway package. The agent logic is dependent on the algorithm in use. For I-EPOS, agents are of type \code{IeposAgent}. For COHDA, agents are of type \code{CohdaAgent}.
 
+When performing a simulations, all agents are started by Protopeer and TreeGateway constructs the tree. After the tree is built, the agents start to execute the algorithm. Each agent logs different metrics that are specified in the configuration. After the algorithm is finished, all logs are gathered and the aggregated results are presented to the user.
+
+\newpage
 \section{Use cases}
 \subsection{Configure the simulation}
 A simulation example is provided in class \code{SimpleExperiment}. It contains a main function that specifies all parameters, starts the simulation and presents the results.
