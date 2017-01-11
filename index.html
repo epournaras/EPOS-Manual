@@ -65,8 +65,10 @@ The instructions assume that the VM is started, the user logged in and on the ho
 
 <ol type="A">
 <li><p>
-We consider a bicycle sharing system implemented in a city. Stations are set up all across the city, providing space for several bicycles each.
-As users drive across the city they move bicycles between the different stations. We notice that over time some stations are lacking bicycles, while others run out of bicycle storage.
+We consider a bicycle sharing system implemented in a city. Stations are set up all across the city,
+providing space for several bicycles each.
+As users drive across the city they move bicycles between the different stations. We notice that
+over time some stations are lacking bicycles, while others are running out of bicycle capacity.
 We try to solve this problem with I-EPOS.
 </p>
 
@@ -75,16 +77,25 @@ We try to solve this problem with I-EPOS.
 Start I-EPOS from the homescreen.
 </p></li>
 <li><p>
-Select the dataset by clicking the "Browse" button right of the "Data Set Location",
+Select the dataset by clicking the "Browse" button to right of "Data Set Location",
 and selecting the directory "bicycle".
 </p></li>
 <li><p>
-We want the change in the number of bicycles stored in each station to be zero.
-Therefore, we leave the "Global Cost Location" at "zero.target".
+We want the change in the number of bicycles stored in each station to be zero, or at least close
+to zero. Therefore, we leave the "Global Cost Location" at "zero.target". I-EPOS will try to
+minimize the squared distance between the global cost and the target, that is the zero vector in this
+case.
 </p></li>
 <li><p>
 For now we are only interested in minimizing the global cost, so please set the "Local Cost Influence"
 to 0.
+</p></li>
+<li><p>
+The other parameters should be left as is. 
+They specify that we want to execute I-EPOS in a binary tree over 15 iterations, which is sufficient
+for the algorithm to converge for this example.
+The "Seed" defines the seed for the random number generator used by I-EPOS.
+Choosing a different value would result in slightly different results.
 </p></li>
 <li><p>
 Click the "Run" button to start the simulation.
@@ -93,27 +104,33 @@ Click the "Run" button to start the simulation.
 While I-EPOS is executing, it tries to find combinations of user plans that make the total change in
 the number of bikes (referred to as global response) as small as possible.
 When the result window opens, it shows in the top section how the algorithm managed to reduce the
-global cost from its initial guess over a course of multiple iterations. The global cost is the
-squared distance of the global response from the target vector, that we left at zero in this example.
+global cost from its initial guess over a course of multiple iterations. The initial guess is already
+quite a lot better than the solution we get if we would let users freely choose bicycle stations. In
+this case the global cost would be nearly 4000.
+In the following iterations the global cost is quickly reduced and reaches its minimum after finishing
+iteration 12.
 </p><p>
 On the bottom left we see the global response after the first iteration.
-Each dimension in this plot represents the change in the number of bikes for one bicycle station.
-The initial guess of the algorithm shows that at the end of the observed period, a station is missing
-16 bikes. If plans were selected at random (i.e. if users can travel however they like), that change
-would be even greater.
+Each dimension in this plot represents the change in the number of bikes for one bicycle station
+over a 2 hour time frame.
+The initial guess of the algorithm shows that a station is missing 16 bikes after 2 hours of users
+leaving from or arriving at the station.
+If users could travel however they liked, the largest change would be over 50 bikes.
 </p><p>
 On the bottom right we see the network of agents. Each agent that changed its selection compared to
 the previous iteration is marked with the color black.
+Since this is the state after the first iteration, all agents had to select some initial plan and
+therefore changed their selection.
 </p></li>
 <li><p>
 Navigate through the iterations using the buttons "Next" and "Previous" to see how I-EPOS manages to
 improve the global response step by step.
-Notice that in the end I-EPOS is able to stabilize all stations so far that they loose or gain one
+Notice how the global response gets stabler and stabler over the iterations.
+In the end I-EPOS is able to stabilize all stations so far that they loose or gain one
 bicycle at most, compared to the 16 in the first iteration.
 </p><p>
-Furthermore, the changes in the network show that only certain groups of agents change their selection
-in each iteration. This is a result of the way I-EPOS merges changes together. Some agents are told not
-to change their selections in order to not hurt the overall performance.
+In the first few iterations we also see how I-EPOS ensures monotonic improvement of the global cost
+- by limiting the change to a subset of agents.
 </p></li>
 <li><p>
 Close the report window, so that you are back at the homescreen.
@@ -145,22 +162,80 @@ Set the "Local Cost Influence" to 0.9
 Click the "Run" button to start the simulation.
 </p></li>
 <li><p>
-In the result window we can see that the global response (bottom left) is already pretty similar
-to the user preferred result. However, I-EPOS manages to turn this initial solution that many users
-like into a solution with much lower global cost without sacrifycing on the local cost.
-The local cost is represented as dashed line in the plot at the top.
+I-EPOS now needs less iterations to reduce the global cost (top), since the added local influence
+to the plan selection process limits the choices the algorithm has to reduce the global cost.
+The average local cost of all agents is also plotted as a dashed line. With about 0.004 it is nearly
+optimal. Due to the
+fact that the users in the dataset can have multiple plans with minimal local cost, I-EPOS still has
+enough freedom to greatly reduce the global cost.
+</p><p>
+The global response (bottom left) is already pretty similar
+to the user preferred result shown above. However, I-EPOS manages to turn this initial solution
+that many users like into a solution with much lower global cost without sacrifycing on the local
+cost. 
 </p></li>
 <li><p>
 Navigate through the iterations again using the buttons "Next" and "Previous" to see how I-EPOS
 manages to improve the global response step by step.
-Notice that the global response is not as stable as it was in our previous simulation, but the local
-cost is close to optimum at around 0.004.
+Notice that the global response is not as stable as it was in our previous simulation.
+We can see that I-EPOS focused on reducing the large spikes in the user preferred response
+(shown above) that have the largest effect on the global cost.
+</p></li>
+</ol>
+
+</li>
+
+<li><p>
+We provide our users with an app where they get bicycle stations suggested that they should use.
+However, not all of our users make use of the app.
+We want to use I-EPOS to let all participating users help us to stabilize traffic from
+non-participating users.
+</p>
+
+<ol>
+<li><p>
+Start I-EPOS from the homescreen.
+</p></li>
+<li><p>
+Select the bicycle dataset again as explained in point A.
+</p></li>
+<li><p>
+Select the target by clicking the "Browse" button to right of "Global Cost Location",
+and selecting the file "incentive.target".
+This target describes that we want the left half of the stations to lose 5 bikes and
+the right half of the stations to receive 5 bikes over a 2 hour period.
+This should correct all bicycle moves made by non-participating users.
+</p></li>
+<li><p>
+Set the "Local Cost Influence" to 0.0
+Usually we would of course choose 0.9 again. However, without local cost minimization the results of
+this scenario are more apparent.
+</p></li>
+<li><p>
+Click the "Run" button to start the simulation.
+</p></li>
+<li><p>
+This scenario seems harder to minimize than when targeting a change of zero, as the algorithm takes
+longer to converge according to the global cost plot (top).
+Based on the global cost we can already see that we will not be able to match the target as well as
+before due to the higher cost at the minimum.
+</p><p>
+The initial global response (bottom left) already shows a tendency towards negative values on the
+left and towards positive values on the right.
+</p></li>
+<li><p>
+Navigate through the iterations again using the buttons "Next" and "Previous" to see how I-EPOS
+manages to improve the global response step by step.
+Notice that in the end the global response barely reaches the target change of -5 for the left side
+or +5 for the right side.
+This means the target is too ambitious or the dataset is not flexible enough.
+But in the end I-EPOS did enable us to make our system more stable the whole system with all of our
+users.
 </p></li>
 </ol>
 
 </li>
 </ol>
-
 
 <!--
   - step-by-step instructions:
