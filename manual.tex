@@ -71,10 +71,12 @@ This documents describes the software that simulates I-EPOS, an algorithm for de
 
 \subsection{Installation and setup}
 \begin{itemize}
-	\item Download the project repository from GitHub (TODO).
-	\item Make sure that a version of Java 8 is installed. You can download it from \url{http://www.oracle.com/technetwork/java/javase/downloads/index.html}.
+	\item Download the project repository from \url{https://github.com/epournaras/EPOS}.
+	\item Make sure that a version of Oracle Java 8 is installed. You can download it from \url{http://www.oracle.com/technetwork/java/javase/downloads/index.html}.
+	\item This should be sufficient to execute I-EPOS.
 \end{itemize}
 \subsubsection*{Netbeans setup}
+Since I-EPOS was developed in the Netbeans IDE, Netbeans can be used to quickly get started in I-EPOS development.
 \begin{itemize}
 	\item Make sure that Netbeans is installed. You can download it from \url{http://netbeans.org/downloads/}.
 	\item Open the EPOS project folder in Netbeans.
@@ -107,7 +109,7 @@ Build and run the project with main class \code{experiment.ui.controller.MainApp
 \end{itemize}
 
 \newpage
-\section{Architecture}
+\section{Main software components}
 The software uses the Protopeer framework to simulate agents in a network. The tree is constructed via the TreeGateway package. The agent logic is dependent on the algorithm in use. For I-EPOS, agents are of type \code{IeposAgent}. For COHDA, agents are of type \code{CohdaAgent}.
 
 When performing a simulations, all agents are started by Protopeer and TreeGateway constructs the tree. After the tree is built, the agents start to execute the algorithm. Each agent logs different metrics that are specified in the configuration. After the algorithm is finished, all logs are gathered and the aggregated results are presented to the user.
@@ -133,7 +135,7 @@ int numAgents = 100;
 \end{verbatim}
 
 \subsubsection*{Cost functions}
-The global cost function describes what we want to minimize globally. The local cost function describes what each agent wants to minimize locally. \code{lambda} is the tradeoff between global and local minimization. \code{lambda = 0} means only global cost is minimized, \code{lambda = 1} means only local cost is minimized.
+The global cost function describes the objective that should be achieved. The local cost function describes what each agent wants to minimize locally. \code{lambda} is the tradeoff between global and local minimization. \code{lambda = 0} means only global cost is minimized, \code{lambda = 1} means only local cost is minimized.
 For global cost functions we can choose any implementation of the interface \code{CostFunction} in general. However, for gradient descent based algorithms an instance of \code{DifferentiableCostFunction} is required. A list of possible global cost functions is as follows:
 \begin{itemize}
 	\item \code{DotCostFunction} minimizes the dot product of a given vector with the global response. See Section \ref{sec:read_vec} how to read the vector from a file. Be aware that the dimensionality of the vector has to match the dimensionality of the dataset.
@@ -159,7 +161,8 @@ double lambda = 0;
 \end{verbatim}
 
 \subsubsection*{Network}
-The network is considered to be a balanced tree with the same number of children for each inner node. The number of children for inner nodes can be specified. Be aware that the runtime of I-EPOS is exponential in the number of children. Luckily the optimization performance of a binary tree is already close to optimal in practice.
+The network is considered to be a balanced tree with the same number of children for each inner node. The number of children for inner nodes can be specified.
+Note that the binary tree is built before the algorithm execution and it remains static for the duration of the algorithm. Every agent remains at the same position in the tree.
 
 For example a binary tree can be specified as follows:
 \begin{verbatim}
@@ -195,7 +198,7 @@ loggingProvider.add(new CostViewer());
 Finally, the optimization algorithm has to be specified. The algorithm is determined by the type of \code{Agent} that is used.
 \begin{itemize}
 	\item \code{IeposAgent} has quite a few options that were part of the research. We need to specify the number of iterations the algorithm should perform. For problems with less than 1000 agents the (local) optimum is usually found with less than 20 iterations. In addition we can specify a \code{PlanSelector}. The default is \code{IeposPlanSelector}. As part of the research that was done for I-EPOS, gradient descent motivated plan selectors were also developed. However, in general they have lower performance than the default.
-	\item \code{CohdaAgent} is an algorithm that was used as a baseline for I-EPOS. We only need to specify the number of iterations for this algorithm. Limitations: First, \code{CohdaAgent} does not support local cost. Therefore \code{LocalCostLogger} cannot be used. Second, the algorithm starts with an incomplete global response that is missing data from some agents. It takes \code{log(numAgents)/log(numChildren)} iterations for the global response to be complete. Third, even though COHDA does not require the network to be a tree, only tree networks can be simulated with this software.
+	\item \code{CohdaAgent}\footnote{Our COHDA implemetation has some limitations: First, \code{CohdaAgent} does not support local cost. Therefore \code{LocalCostLogger} cannot be used. Second, the algorithm starts with an incomplete global response that is missing data from some agents. It takes \code{log(numAgents)/log(numChildren)} iterations for the global response to be complete. Third, even though COHDA does not require the network to be a tree, only tree networks can be simulated with this software.} is an algorithm that was used as a baseline for performance comparison. We only need to specify the number of iterations for this algorithm.
 \end{itemize}
 
 \noindent In order to use the I-EPOS algorithm, the system should consist of \code{IeposAgent} nodes. This can be specified via the following function:
@@ -278,22 +281,15 @@ public class MyDataset implements Dataset<Vector> {
 }
 \end{verbatim}
 
-\subsection{Add a new datatype}
-Write a new class that implements the interface \code{Datatype}. The functions of the interface \code{DataType} were designed work for vectors. So when implementing those functions, be aware that the semantic should be as it would be for vectors.
+\subsection{Target signals} \label{sec:read_vec}
+Target signals specify what the global response should look like. They can be used together with the \code{SqrDistCostFunction}. I-EPOS will minimize the squared distance of the global response
+to the target signal.
+The target vector can be read from a file via \code{VectorIO.readVector(File vectorFile)}. The file is assumed to be text file, containing a comma-separated list of double values that make up the vector.
 
-To use the new datatype, we also need to implement a new dataset and a new cost function that can handle the new datatype.
-
-\section{Troubleshooting}
-If you need help in using or extending I-EPOS, feel free to contact us.
-
-\begin{tabular}{ll}
-Evangelos Pournaras & \url{evangelos.pournaras@gess.ethz.ch} \\
-Peter Pilgerstorfer & \url{peter.pilgerstorfer@outlook.com}
-\end{tabular}
-
-\appendix
-\section{Glossary}
-\section{Utility functions}
-\subsection{Reading a vector} \label{sec:read_vec}
-A vector can be read from a file via \code{VectorIO.readVector(File vectorFile)}. The file is assumed to be text file, containing a comma-separated list of double values that make up the vector.
+The following example shows how to use a target signal to define the cost function:
+\begin{verbatim}
+String filename = ``my.target'';
+Vector target = VectorIO.readVector(new File(filename));
+CostFunction globalCostFunc = new SqrDistCostFunction(target);
+\end{verbatim}
 \end{document}
