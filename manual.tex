@@ -67,9 +67,9 @@
 \maketitle
 
 \section{Introduction}
-This documents describes the software that simulates I-EPOS, an algorithm for decentralized combinatorial optimization.
+This documents describes I-EPOS, an algorithm for decentralized combinatorial optimization.
 
-\subsection{Installation and setup}
+\subsection{Installation and setup} \label{sec:setup}
 \begin{itemize}
 	\item Download the project repository from \url{https://github.com/epournaras/EPOS}.
 	\item Make sure that a version of Oracle Java 8 is installed. You can download it from \url{http://www.oracle.com/technetwork/java/javase/downloads/index.html}.
@@ -106,6 +106,34 @@ Build and run the project with main class \code{experiment.ui.controller.MainApp
 \caption{Simulation results}
 \label{fig:result}
 \end{figure}
+\end{itemize}
+
+\subsection{Experimental}
+This section describes the live version of I-EPOS that is still in development.
+Compared to the standard version that simulates a
+distributed system, the live version starts a separate process for each agent and the communication
+actually happens through the network stack.
+The Protopeer library that is used for message passing is also able to deploy such a live version in
+a distributed system.
+This version is experimental, as a lot of features are missing and it can only be executed from command line.
+
+\begin{itemize}
+	\item We assume Oracle Java 8 is installed as described in Section \ref{sec:setup}.
+	\item Download the LiveExperiment branch of the project repository from \url{https://github.com/epournaras/EPOS/tree/LiveExperiment}.
+	\item Execute it as follows:
+	\begin{verbatim}
+	java -jar IEPOS.jar
+	\end{verbatim}
+	IMPORTANT: when the jar file is built by Netbeans, it is written to dist/IEPOS.jar.
+	The live experiment exptects the jar file to be in the project directory.
+	\item The main class is \code{experiment.SimpleLiveExperiment}.
+\end{itemize}
+\subsubsection*{Netbeans setup}
+Since I-EPOS was developed in the Netbeans IDE, Netbeans can be used to quickly get started in I-EPOS development.
+\begin{itemize}
+	\item Make sure that Netbeans is installed. You can download it from \url{http://netbeans.org/downloads/}.
+	\item Open the EPOS project folder in Netbeans.
+	\item Add all libraries from the lib folder to the project.
 \end{itemize}
 
 \newpage

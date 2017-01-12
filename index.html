@@ -408,10 +408,9 @@ This should correct all bicycle moves made by non-participating users.
 
 <li><p>
 
-Set the "Local Cost Influence" to 0.0
+Set the "Local Cost Influence" to 0.5 .
 
-Usually we would of course choose 0.9 again. However, without local cost minimization the results of
-
+Usually we would of course choose 0.9 again. However, with a reduce local cost influence the results of
 this scenario are more apparent.
 
 </p></li>
@@ -580,6 +579,25 @@ Contains versions of the bicycle and energy dataset with more agents.
 
 </td>
 
+</tr>
+
+<tr>
+<td><a href="experimental/IEPOS.jar">experimental/IEPOS.jar</a></td>
+<td>
+Contains the experimental live version executable of I-EPOS.
+In order to execute it, <a href="http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html">
+Oracle Java 8</a> has to be installed.
+It is executable via commandline:<br/>
+<code>cd experimental</code><br/>
+<code>java -jar IEPOS.jar</code>
+<br/>
+Compared to the standard binary that simulates a
+distributed system, the live version starts a separate process for each agent and the communication
+actually happens through the network stack.
+The Protopeer library that is used for message passing is also able to deploy such a live version in
+a distributed system.
+This version is experimental, as a lot of features are missing and it can only be executed from command line.
+</td>
 </tr>
 
 <tr>
