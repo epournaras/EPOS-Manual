@@ -83,7 +83,7 @@ Since I-EPOS was developed in the Netbeans IDE, Netbeans can be used to quickly 
 	\item Add all libraries from the lib folder to the project.
 \end{itemize}
 
-\subsection{Execute the sample simulation}
+\subsection{Run I-EPOS}
 \begin{itemize}
 	\item Start the program
 	\begin{itemize}
@@ -92,21 +92,39 @@ Navigate to the project directory and execute \code{java -jar EPOS.jar}.
 	\item Compile and run in Netbeans:\\
 Build and run the project with main class \code{experiment.ui.controller.MainApplication} (default setting).
 	\end{itemize}
-	\item The configuration window opens as shown in Figure \ref{fig:config}. Run the simulation by clicking the "Run" button.
+	\item The configuration window opens as shown in Figure \ref{fig:config}.
 \begin{figure}[h]
 \centering
 \includegraphics[scale=0.6]{img/configuration.png}
 \caption{Simulation configuration}
 \label{fig:config}
 \end{figure}
-	\item The result window opens and shows details about the simulation as shown in Figure \ref{fig:result}. The plot "Global and average local cost" shows the global and local cost in each iteration. The two plots on the bottom show the system state after each iteration. Switch between iterations with the "Next" and "Previous" buttons. The plot "Global Response" shows what the global response, the output of the system, looks like. The plot "Network" shows which agents in the network changed their selections compared to the previous iteration.
-\begin{figure}[h]
+	It is possible to configure I-EPOS to some extent:
+	\begin{itemize}
+		\item \emph{Data Set Location} the dataset that should be used. A dataset is stored in a directory, containing files for each agent. I-EPOS contains three sample datasets in the directory ``datasets''.
+		\item \emph{Global Cost Location} ... The target output of the system. I-EPOS will try to minimize the distance between global response and target vector. Each sample dataset contains some targets that can be used for this dataset. When using ``gaussian/zero.target'', I-EPOS will try to minimize the square distance of the global response to the origin.
+		\item \emph{Local Cost Influence} ... Controls the tradeoff between minimizing global cost and minimizing local cost. An influence of 0 means pure global optimization, an influence of 1 means pure local optimization.
+		\item \emph{Algorithm} ... The algorithm that should be used to run the simulation. During research, different variations of I-EPOS were developed that can be chosen in this drop down menu.
+		\item \emph{Number of Children} ... The network used by I-EPOS is a tree. This parameter controls the number of children an agent in this tree can have at most.
+		\item \emph{Number of Iterations} ... The number of iterations I-EPOS should execute.
+		\item \emph{Seed} ... The seed for the random number generator. Some decisions are made at random, for example if two plans have the same cost. In order to be able to rerun previous the seed is used to initialize all RNGs used in I-EPOS. Running the same simulation twice with the same seed will result in the same output.
+	\end{itemize}
+	Run the simulation by clicking the "Run" button.
+	\item The result window opens and shows details about the simulation as shown in Figure~\ref{fig:result}.
+	\begin{figure}[h]
 \centering
 \includegraphics[scale=0.6]{img/results.png}
 \caption{Simulation results}
 \label{fig:result}
 \end{figure}
 \end{itemize}
+Some plots are shown:
+	\begin{itemize}
+		\item \emph{Global and average local cost} ... shows the global and average local cost in each iteration.
+		\item \emph{Global Response} ... shows the global response, the output of the system, for the current iteration.
+		\item \emph{Network} ...  shows which agents in the network changed their selections in the current iteration compared to the previous iteration.
+	\end{itemize}
+	The two plots at the bottom show the state of the system after a certain iteration of I-EPOS.  Use the buttons ``Previous'' and ``Next'' to look at the results of different iterations.
 
 \subsection{Experimental}
 This section describes the live version of I-EPOS that is still in development.
