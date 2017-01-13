@@ -113,8 +113,8 @@ This section describes the live version of I-EPOS that is still in development.
 Compared to the standard version that simulates a
 distributed system, the live version starts a separate process for each agent and the communication
 actually happens through the network stack.
-The Protopeer library that is used for message passing is also able to deploy such a live version in
-a distributed system.
+The ProtoPeer library that is used for message passing is also able to deploy such a live version in
+a distributed system \cite{protopeer}.
 This version is experimental, as a lot of features are missing and it can only be executed from command line.
 
 \begin{itemize}
@@ -138,9 +138,10 @@ Since I-EPOS was developed in the Netbeans IDE, Netbeans can be used to quickly 
 
 \newpage
 \section{Main software components}
-The software uses the Protopeer framework to simulate agents in a network. The tree is constructed via the TreeGateway package. The agent logic is dependent on the algorithm in use. For I-EPOS, agents are of type \code{IeposAgent}. For COHDA, agents are of type \code{CohdaAgent}.
+The software uses the ProtoPeer framework to simulate agents in a network. The tree is constructed via the TreeGateway package. The agent logic is dependent on the algorithm in use. For I-EPOS, agents are of type \code{IeposAgent}. For COHDA, agents are of type \code{CohdaAgent}.
 
-When performing a simulations, all agents are started by Protopeer and TreeGateway constructs the tree. After the tree is built, the agents start to execute the algorithm. Each agent logs different metrics that are specified in the configuration. After the algorithm is finished, all logs are gathered and the aggregated results are presented to the user.
+When performing a simulations, all agents are started by ProtoPeer and TreeGateway constructs the tree. After the tree is built, the agents start to execute the algorithm.
+Each agent logs different metrics that are specified in the configuration. After the algorithm is finished, all logs are gathered and the aggregated results are presented to the user.
 
 \newpage
 \section{Use cases}
@@ -320,4 +321,7 @@ String filename = ``my.target'';
 Vector target = VectorIO.readVector(new File(filename));
 CostFunction globalCostFunc = new SqrDistCostFunction(target);
 \end{verbatim}
+
+\bibliographystyle{plain}
+\bibliography{manual}
 \end{document}

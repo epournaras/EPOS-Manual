@@ -1,3 +1,6 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- saved from url=(0016)http://localhost -->
+
 <html>
 
 <head>
@@ -58,7 +61,7 @@ key elements of your artifact. If well written, anyone who has successfully comp
 
 Started guide should not have any technical difficulties with the rest of your artifact. The Getting
 
-Started guide is your only opportunity to allow “debugging” of your artifact. Once the reviewers
+Started guide is your only opportunity to allow �debugging� of your artifact. Once the reviewers
 
 have completed this phase, there will be no further opportunity for interaction with you, the
 
@@ -70,13 +73,11 @@ authors.
 
 <ul>
 
-<li>Start the virtual machine with configuration file <a href="vm/I-EPOS.vmx">vm/I-EPOS.vmx</a> and virtual disk <a href="vm/I-EPOS.vmx">vm/I-EPOS.vmdk</a>.
+<li>Start the virtual machine with configuration file <a href="vm/I-EPOS.ovf">vm/I-EPOS.ovf</a> and virtual disk <a href="vm/I-EPOS.vmdk">vm/I-EPOS.vmdk</a>.
 
 <br/>
 
-If you cannot start the virtual machine, try using <a href="http://www.vmware.com/products/player/playerpro-evaluation.html">VMWare Player</a> for Windows or Linux.
-
-<!-- TODO: Mac user? -->
+If you cannot start the virtual machine, try using <a href="https://www.virtualbox.org/wiki/Downloads">Oracle VirtualBox</a>. It was tested in Windows 10 and Mac OS Sierra.
 
 </li>
 
@@ -193,27 +194,17 @@ Choosing a different value would result in slightly different results.
 Click the "Run" button to start the simulation.
 
 </p></li>
-
 <li><p>
-
 While I-EPOS is executing, it tries to find combinations of user plans that make the total change in
-
 the number of bikes (referred to as global response) as small as possible.
-
 When the result window opens, it shows in the top section how the algorithm managed to reduce the
-
-global cost from its initial guess over a course of multiple iterations. The initial guess is already
-
+global cost from its initial guess over a course of multiple iterations.
+The initial guess is already
 quite a lot better than the solution we get if we would let users freely choose bicycle stations. In
-
 this case the global cost would be nearly 4000.
-
 In the following iterations the global cost is quickly reduced and reaches its minimum after finishing
-
 iteration 12.
-
 </p><p>
-
 On the bottom left we see the global response after the first iteration.
 
 Each dimension in this plot represents the change in the number of bikes for one bicycle station
@@ -444,7 +435,7 @@ manages to improve the global response step by step.
 Notice that in the end the the algorithm has a hard time to reach the target change of -5 for the left side
 or +5 for the right side.
 This means the target is too ambitious or the dataset is not flexible enough.
-But in the end I-EPOS did enable us to make our system more stable the whole system with all of our
+But in the end I-EPOS did enable us to make our system more stable for all of our
 users.
 
 </p></li>
@@ -482,10 +473,18 @@ users.
 <h1>Live deployment</h1>
 
 
-
-An implementation of I-EPOS for live deployment in which agents run in parallel as seprate processes is available in the following branch: <a href="https://github.com/epournaras/EPOS/tree/LiveExperiment">https://github.com/epournaras/EPOS/tree/LiveExperiment</a>. Note that this implementation is functional, yet experimental and it is work-in-progress to fully align it with simulations performed by the main software. 
-
-
+<p>
+An implementation of I-EPOS for live deployment in which agents run in parallel as seprate processes
+is available in the following branch:
+<a href="https://github.com/epournaras/EPOS/tree/LiveExperiment">https://github.com/epournaras/EPOS/tree/LiveExperiment</a>. Note that this implementation is functional, yet experimental and it is work-in-progress to fully align it with simulations performed by the main software. 
+</p>
+<p>
+In order to execute it, <a href="http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html">
+Oracle Java 8</a> has to be installed.
+It is at the moment only executable via commandline:<br/>
+<code>cd experimental</code><br/>
+<code>java -jar IEPOS.jar</code>
+</p>
 
 <h1>File reference</h1>
 
@@ -585,18 +584,6 @@ Contains versions of the bicycle and energy dataset with more agents.
 <td><a href="experimental/IEPOS.jar">experimental/IEPOS.jar</a></td>
 <td>
 Contains the experimental live version executable of I-EPOS.
-In order to execute it, <a href="http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html">
-Oracle Java 8</a> has to be installed.
-It is executable via commandline:<br/>
-<code>cd experimental</code><br/>
-<code>java -jar IEPOS.jar</code>
-<br/>
-Compared to the standard binary that simulates a
-distributed system, the live version starts a separate process for each agent and the communication
-actually happens through the network stack.
-The Protopeer library that is used for message passing is also able to deploy such a live version in
-a distributed system.
-This version is experimental, as a lot of features are missing and it can only be executed from command line.
 </td>
 </tr>
 
@@ -710,8 +697,12 @@ If you need help in using or extending I-EPOS, feel free to contact us.
 </table>
 
 
-
-
+<!--
+<h1>References</h1>
+[1] GALUBA, Wojciech, et al. ProtoPeer: a P2P toolkit bridging the gap between simulation and
+live deployement. In:
+<i>Proceedings of the 2nd International Conference on Simulation Tools and Techniques</i>. ICST (Institute for Computer Sciences, Social-Informatics and Telecommunications Engineering), 2009. S. 60.
+-->
 
 </document>
 
